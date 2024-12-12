@@ -12,13 +12,22 @@ async function initialize() {
     document.getElementById('quoteText').value = result.selectedText;
   }
 
+  // 等待 DOM 加载完成
+  await new Promise(resolve => {
+    if (document.readyState === 'complete') {
+      resolve();
+    } else {
+      window.addEventListener('load', resolve);
+    }
+  });
+
   // 设置事件监听器
   setupEventListeners();
   
   // 应用默认模板
   applyTemplate('simple');
 
-  const cardExporter = new CardExporter();
+  window.cardExporter = new CardExporter();
 }
 
 // 加载模板列表
@@ -110,17 +119,17 @@ function setupEventListeners() {
 
   // 导出按钮点击
   document.getElementById('exportBtn').addEventListener('click', () => {
-    cardExporter.showExportDialog();
+    window.cardExporter.showExportDialog();
   });
 
   // 取消导出
   document.getElementById('cancelExport').addEventListener('click', () => {
-    cardExporter.hideExportDialog();
+    window.cardExporter.hideExportDialog();
   });
 
   // 确认导出
   document.getElementById('confirmExport').addEventListener('click', () => {
-    cardExporter.exportCard();
+    window.cardExporter.exportCard();
   });
 }
 

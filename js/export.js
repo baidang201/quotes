@@ -1,18 +1,31 @@
 class CardExporter {
   constructor() {
     this.dialog = document.getElementById('exportDialog');
-    this.loadScript();
+    this.initialized = false;
+    this.initialize();
   }
 
-  // 动态加载html2canvas
-  loadScript() {
-    const script = document.createElement('script');
-    script.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
-    document.head.appendChild(script);
+  // 初始化
+  async initialize() {
+    try {
+      // 确保 html2canvas 已加载
+      if (typeof html2canvas === 'undefined') {
+        throw new Error('html2canvas not loaded');
+      }
+      this.initialized = true;
+    } catch (error) {
+      console.error('CardExporter initialization failed:', error);
+      this.initialized = false;
+    }
   }
 
   // 显示导出对话框
   showExportDialog() {
+    if (!this.initialized) {
+      alert('导出功能初始化失败，请刷新页面重试');
+      return;
+    }
+    
     this.dialog.style.display = 'flex';
     
     // 设置默认尺寸
@@ -28,12 +41,22 @@ class CardExporter {
 
   // 获取导出设置
   getExportSettings() {
-    return {
+    const settings = {
       format: document.getElementById('exportFormat').value,
       quality: document.getElementById('exportQuality').value / 100,
       width: parseInt(document.getElementById('exportWidth').value),
       height: parseInt(document.getElementById('exportHeight').value)
     };
+
+    // 验证设置
+    if (!settings.width || !settings.height) {
+      throw new Error('请输入有效的图片尺寸');
+    }
+    if (settings.quality <= 0 || settings.quality > 1) {
+      throw new Error('请输入有效的图片质量(1-100)');
+    }
+
+    return settings;
   }
 
   // 创建loading遮罩
@@ -46,44 +69,79 @@ class CardExporter {
 
   // 导出卡片为图片
   async exportCard() {
-    const settings = this.getExportSettings();
-    const preview = document.getElementById('cardPreview');
-    const loading = this.showLoading();
+    if (!this.initialized) {
+      alert('导出功能初始化失败，请刷新页面重试');
+      return;
+    }
 
+    let loading = null;
+    
     try {
+      const settings = this.getExportSettings();
+      const preview = document.getElementById('cardPreview');
+      
+      // 显示加载状态
+      loading = this.showLoading();
+
+      // 克隆预览元素以保持原始样式
+      const clonedPreview = preview.cloneNode(true);
+      clonedPreview.style.width = `${settings.width}px`;
+      clonedPreview.style.height = `${settings.height}px`;
+      clonedPreview.style.position = 'fixed';
+      clonedPreview.style.left = '-9999px';
+      document.body.appendChild(clonedPreview);
+
       // 创建canvas
-      const canvas = await html2canvas(preview, {
+      const canvas = await html2canvas(clonedPreview, {
         width: settings.width,
         height: settings.height,
         scale: 2, // 提高清晰度
         useCORS: true,
-        backgroundColor: null
+        backgroundColor: null,
+        logging: false // 禁用日志
       });
+
+      // 移除克隆的元素
+      document.body.removeChild(clonedPreview);
 
       // 转换为blob
-      const blob = await new Promise(resolve => {
-        canvas.toBlob(
-          blob => resolve(blob),
-          `image/${settings.format}`,
-          settings.quality
-        );
+      const blob = await new Promise((resolve, reject) => {
+        try {
+          canvas.toBlob(
+            blob => resolve(blob),
+            `image/${settings.format}`,
+            settings.quality
+          );
+        } catch (error) {
+          reject(error);
+        }
       });
 
-      // 创建下载链接
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `quote-card-${Date.now()}.${settings.format}`;
-      link.click();
+      if (!blob) {
+        throw new Error('图片生成失败');
+      }
 
-      // 清理
-      URL.revokeObjectURL(url);
+      // 使用 chrome.downloads API 下载文件
+      const url = URL.createObjectURL(blob);
+      chrome.downloads.download({
+        url: url,
+        filename: `quote-card-${Date.now()}.${settings.format}`,
+        saveAs: true
+      }, (downloadId) => {
+        URL.revokeObjectURL(url);
+        if (chrome.runtime.lastError) {
+          throw new Error(chrome.runtime.lastError.message);
+        }
+      });
+
       this.hideExportDialog();
     } catch (error) {
       console.error('导出失败:', error);
-      alert('导出失败，请重试');
+      alert(error.message || '导出失败，请重试');
     } finally {
-      loading.remove();
+      if (loading) {
+        loading.remove();
+      }
     }
   }
 } 
