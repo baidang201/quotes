@@ -17,6 +17,8 @@ async function initialize() {
   
   // 应用默认模板
   applyTemplate('simple');
+
+  const cardExporter = new CardExporter();
 }
 
 // 加载模板列表
@@ -104,6 +106,21 @@ function setupEventListeners() {
     } else {
       alert('模板保存失败！');
     }
+  });
+
+  // 导出按钮点击
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    cardExporter.showExportDialog();
+  });
+
+  // 取消导出
+  document.getElementById('cancelExport').addEventListener('click', () => {
+    cardExporter.hideExportDialog();
+  });
+
+  // 确认导出
+  document.getElementById('confirmExport').addEventListener('click', () => {
+    cardExporter.exportCard();
   });
 }
 
