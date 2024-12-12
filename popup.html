@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Quote Card Generator</title>
+  <link rel="stylesheet" href="styles/popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="editor-panel">
+      <div class="text-input">
+        <textarea id="quoteText" placeholder="输入或粘贴文字..."></textarea>
+      </div>
+      
+      <div class="style-controls">
+        <div class="template-selector">
+          <label>选择模板</label>
+          <select id="templateSelect">
+            <option value="simple">简约</option>
+            <option value="vintage">复古</option>
+            <option value="modern">现代</option>
+          </select>
+        </div>
+
+        <div class="style-options">
+          <div class="font-controls">
+            <label>字体设置</label>
+            <select id="fontFamily">
+              <option value="Arial">Arial</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="SimSun">宋体</option>
+            </select>
+            <input type="number" id="fontSize" min="12" max="72" value="24">
+            <input type="color" id="fontColor" value="#000000">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-panel">
+      <div id="cardPreview" class="card-preview"></div>
+    </div>
+
+    <div class="action-buttons">
+      <button id="exportBtn">导出</button>
+      <button id="saveTemplateBtn">保存模板</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html> 
