@@ -10,12 +10,17 @@ class CardExporter {
     try {
       // 确保 html2canvas 已加载
       if (typeof html2canvas === 'undefined') {
-        throw new Error('html2canvas not loaded');
+        // 等待一段时间再次检查
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        if (typeof html2canvas === 'undefined') {
+          throw new Error('html2canvas not loaded');
+        }
       }
       this.initialized = true;
     } catch (error) {
       console.error('CardExporter initialization failed:', error);
       this.initialized = false;
+      throw error; // 向上传播错误
     }
   }
 

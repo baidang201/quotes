@@ -12,12 +12,20 @@ async function initialize() {
     document.getElementById('quoteText').value = result.selectedText;
   }
 
-  // 等待 DOM 加载完成
+  // 等待页面完全加载（包括所有资源）
   await new Promise(resolve => {
-    if (document.readyState === 'complete') {
+    if (document.readyState === 'complete' && typeof html2canvas !== 'undefined') {
       resolve();
     } else {
-      window.addEventListener('load', resolve);
+      window.addEventListener('load', () => {
+        // 确保html2canvas已加载
+        if (typeof html2canvas !== 'undefined') {
+          resolve();
+        } else {
+          console.error('html2canvas not loaded');
+          alert('初始化失败：缺少必要的组件');
+        }
+      });
     }
   });
 
@@ -27,7 +35,12 @@ async function initialize() {
   // 应用默认模板
   applyTemplate('simple');
 
-  window.cardExporter = new CardExporter();
+  try {
+    window.cardExporter = new CardExporter();
+  } catch (error) {
+    console.error('CardExporter initialization failed:', error);
+    alert('导出功能初始化失败');
+  }
 }
 
 // 加载模板列表
